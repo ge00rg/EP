@@ -4,7 +4,7 @@ import sys
 
 
 def ep(x, y, var_0, var_1, rho,
-       tolerance=0.0001, maxiter=100000000, verbose=True):
+       tolerance=0.0001, maxiter=1000000, verbose=True):
     '''
     x: ndarray, datapoints x features, henceforth n x d
     y: ndarray, size=n
@@ -81,8 +81,6 @@ def ep(x, y, var_0, var_1, rho,
                 (alpha_i * (np.dot(x[i].T, mu_new) + alpha_i))/(
                     np.dot(x[i].T, np.multiply(v_old, x[i])) + 1.0)) *\
                 np.multiply(np.multiply(v_old, x[i]), np.multiply(v_old, x[i]))
-            print("v_new: ", v_new)
-            print("v_old: ", v_old)
             # not sure this will be necessary later, but for now...
             if np.array_equal(v_new, v_old):
                 print('cont')
@@ -155,8 +153,10 @@ def ep(x, y, var_0, var_1, rho,
         d_p = np.sum(np.absolute(p - p_conv))
 
         if (d_mu + d_v + d_p <= tolerance and not d_mu + d_v + d_p == 0):
-            converge = True
-        print("conv :", iter_count, d_mu, d_v, d_p, d_mu + d_v + d_p, d_mu + d_v + d_p <= tolerance, p_update)
+            #converge = True
+            converge = False
+        if (iter_count%200 == 0):
+            print("conv :", iter_count, d_mu, d_v, d_p, d_mu + d_v + d_p, d_mu + d_v + d_p <= tolerance, p_update)
 
         # feedback
         if verbose and iter_count % 1000 == 0:
