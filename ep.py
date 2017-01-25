@@ -173,3 +173,10 @@ def ep(x, y, var_0, var_1, rho,
     # for now
     print(mu, v)
     return mu, v
+
+
+# TODO: datasets
+# TODO: prediction as convergence crit., and also others.
+# TODO: save and plot predictions and other stuff over 'time'
+# TODO: variance over time
+# TODO: correlate stuff with prediction
