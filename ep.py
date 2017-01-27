@@ -172,8 +172,13 @@ def ep(x, y, var_0, var_1, rho,
 
     # for now
     print(mu, v)
-    return mu, v
 
+    def f(x):
+        return (norm.cdf(np.dot(x.T, mu) / np.sqrt(np.dot(x.T, np.multiply(v, x.T).T) + 1.0)) -
+                norm.cdf(
+                    np.dot(-x.T, mu) / np.sqrt(np.dot(-x.T, np.multiply(v, -x.T).T) + 1.0)) - 0.5)
+
+    return f
 
 # TODO: datasets
 # TODO: prediction as convergence crit., and also others.
