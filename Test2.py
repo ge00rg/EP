@@ -23,7 +23,7 @@ class Experiment:
         """
         prob = 1.0/(1.0 +np.exp(- (beta_0 + np.dot(beta, x) )))
         if(prob <= np.random.uniform(0.0, 1.0, size = (1,)) ):
-            return 0.0
+            return -1.0
         return 1.0
 
 
@@ -32,9 +32,9 @@ class Experiment:
 
 def main():
     experiment = Experiment()
-    beta = np.array([0.9, 0.1, -3.0])
+    beta = np.array([1.0, 0.0, -8.0])
     x,y = experiment.getTestData(1000,2, beta)
-    f = ep.ep(x, y, 0.000000000001, 1.0, tolerance=10e-18, rho=0.1,maxiter=400000, verbose=False)
+    f = ep.ep(x, y, 0.000000000001, 1.0, tolerance=10e-18, rho=0.5,maxiter=1000000, verbose=False)
     fig = plt.figure()
     ax = fig.add_subplot(1, 2, 1, projection='3d')
     ax.scatter(x[:, 0], x[:, 1], y)
@@ -42,8 +42,6 @@ def main():
     n = 100
     x_test, y_test = experiment.getTestData(n,2, beta)
     y_test= y_test.reshape((n))
-    x_test2  =x_test
-    y_test2  = -1.0*y_test
     y_pred = [f(x) for x,y in zip(x_test,y_test)]
     ax = fig.add_subplot(1, 2, 2, projection='3d')
     ax.scatter(x_test[:, 0], x_test[:, 1], y_pred)
