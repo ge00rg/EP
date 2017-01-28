@@ -1,8 +1,3 @@
-'''
-Created on 24.01.2017
-
-@author: paul
-'''
 import numpy as np
 
 x = np.random.uniform(size=(5,100))
@@ -38,5 +33,5 @@ x[4, 90] += inc
 y = np.array([1, -1, 1, -1, 1])
 y = np.reshape(y, (5,1))
 
-np.savetxt("X_train.txt", x)
-np.savetxt("Y_train.txt",y)
+np.savetxt("data/X_train.txt", x)
+np.savetxt("data/Y_train.txt",y)
