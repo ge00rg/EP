@@ -156,10 +156,15 @@ def ep(x, y, var_0=0.000000000001, var_1=1.0, rho=0.1,
             d_mu = np.sum(np.absolute(mu - mu_conv))
             d_v = np.sum(np.absolute(v - v_conv))
             d_p = np.sum(np.absolute(p - p_conv))
-    
+        
+#             print("delta mu: " , d_mu)
+#             print("delta v: " , d_v)
+#             print("delta p: " , d_p)
+#             print("delta sum: " , d_mu + d_v + d_p)
             if (d_mu + d_v + d_p <= tolerance and not d_mu + d_v + d_p == 0):
-                #converge = True
-                converge = False
+                converge = True
+                print("EP converged!")
+                #converge = False
             #if (iter_count%200 == 0):
                 #print("conv :", iter_count, d_mu, d_v, d_p, d_mu + d_v + d_p, d_mu + d_v + d_p <= tolerance, p_update)
     
@@ -182,7 +187,7 @@ def ep(x, y, var_0=0.000000000001, var_1=1.0, rho=0.1,
                 #norm.cdf(
                 #    np.dot(-x.T, mu) / np.sqrt(np.dot(-x.T, np.multiply(v, -x.T).T) + 1.0)) - 0.5)
 
-    return f
+    return f, p
 
 # TODO: datasets
 # TODO: prediction as convergence crit., and also others.
