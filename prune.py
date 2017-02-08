@@ -1,7 +1,16 @@
 import numpy as np
+import timeit
 import ep
 from sklearn.model_selection import train_test_split
 import matplotlib. pyplot as plt
+from sklearn.svm import SVC
+from sklearn.model_selection import cross_val_score
+from sklearn.model_selection import ShuffleSplit
+from sklearn.model_selection import KFold
+
+import warnings
+
+warnings.filterwarnings("ignore")
 
 def easyclass(x, y, per=0.1):
     pos = np.where(y == 1)[0]
@@ -11,11 +20,11 @@ def easyclass(x, y, per=0.1):
 
     mu_pos = np.mean(xpos, axis=0)
     mu_neg = np.mean(xneg, axis=0)
-    #var_pos = np.var(xpos, axis=0)
-    #var_neg = np.var(xneg, axis=0)
+    var_pos = np.var(xpos, axis=0)
+    var_neg = np.var(xneg, axis=0)
 
     mu = mu_pos - mu_neg
-    var = np.var(x, axis=0)
+    var = 0.5 * (var_pos + var_neg)
 
     corr = mu/var
     corrmax = np.max(corr)
@@ -30,9 +39,9 @@ def easyclass(x, y, per=0.1):
     print(x[:,inds], corr[inds])
     return inds, corr[inds], f
 
-datasets = ["test", "leukemia", "colon", "alon", "borovecki", "burczynski", "chiaretti", "chin", "chowdary", "christensen", "golub", "gordon", "gravier", "khan", "nakayama", "pomeroy", "shipp", "singh", "sorlie", "su", "subramanian", "sun", "tian", "west", "yeoh"]
+datasets = ["leukemia", "prostate", "colon", "adenocarcinoma"]
 
-set = 1
+set = 2
 
 x = np.genfromtxt('data/' + datasets[set] + '_x.csv', delimiter=",")
 y = np.genfromtxt('data/' + datasets[set] + '_y.csv', delimiter=",")
@@ -45,48 +54,35 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1)
 pos = np.where(y == 1)[0]
 neg = np.where(y == -1)[0]
 
-a, b, f = easyclass(x_train, y_train, per=0.2)
-print(f(x_test), y_test)
+inds, corr, f = easyclass(x_train, y_train, per=0.2)
+#print(f(x_test), y_test)
 
-out = ep.ep(x_train, y_train, 0.000000000001, 1.0, tolerance=10e-18, rho=0.04,maxiter=100, verbose=False)
-f = out[0]
-p = out[1]
-print(np.max(p))
+x_reduced = x[:,inds]
+y_reduced = y
+print("x_reduced", x_reduced.shape)
 
-for i in range(x_test.shape[0]):
-    print(str(i) + ":", "Prediction: " + str(f(x_test[i])) + "\tLabel: " + str(y_test[i]))
+iters = 10
+k = 5
+model_svc = SVC(max_iter=100000000)
+scores_svc_before = np.zeros(shape=(iters,k))
+scores_svc_after = np.zeros(shape=(iters,k))
 
-inds8 = np.where(p > 0.8)
-inds7 = np.where(p > 0.7)
-inds6 = np.where(p > 0.6)
-inds5 = np.where(p > 0.5)
-inds4 = np.where(p > 0.4)
-inds3 = np.where(p > 0.3)
-inds2 = np.where(p > 0.2)
-inds1 = np.where(p > 0.1)
+def f1():
+    return cross_val_score(model_svc, x_reduced, y_reduced, cv=KFold(k,shuffle=True, random_state=np.random.randint(10,1000)), scoring='accuracy')
+def f2():
+    return cross_val_score(model_svc, x, y, cv=KFold(k,shuffle=True, random_state=np.random.randint(10,1000)), scoring='accuracy')
+def f3():
+    easyclass(x_train, y_train, per=0.2)
 
-print(inds8, inds7, inds6, inds5, inds4)
+#s1 = timeit.timeit(f1, number=1000)
+#s2 = timeit.timeit(f2, number=1000)
+s3 = timeit.timeit(f3, number=1000)
+print(s3)
+#print("Timeit1: ", s1, "\nTimeit2: ", s2)
 
-plt.figure(figsize=(10,30))
-plt.imshow(np.vstack((x[pos], x[neg])), interpolation='None', aspect='auto', cmap='viridis')
-plt.axhline(y=len(pos), alpha=0.5)
-#for i in inds8[0]:
-#    plt.text(i, -1, '|')
-#    plt.text(i, x.shape[0]+1, '|')
-    #plt.axvline(x=i, linestyle='dotted', alpha=0.5, color='g')
-for k, i in enumerate(p):
-    plt.axvline(x=k, alpha=5*i, color='k')
-plt.colorbar()
-
-plt.figure()
-n, bins, patches = plt.hist(p, 50, normed=True)
-plt.show()
-
-#histogram x
-#feature selection with different cutoffs x
-#image micaroarray and highlight these x
-#classification using:
-#svm
-#mu, v from ep
-#easyclass
-#use easyclass for preprocessing
+# for i in range(iters):
+#     scores_svc_after[i] = cross_val_score(model_svc, x_reduced, y_reduced, cv=KFold(k,shuffle=True, random_state=np.random.randint(10,1000)), scoring='accuracy')
+#     scores_svc_before[i] = cross_val_score(model_svc, x, y, cv=KFold(k,shuffle=True, random_state=np.random.randint(10,1000)), scoring='accuracy')
+#     
+# print("scores_svc before: " , scores_svc_before, "\n\tmean:", np.mean(scores_svc_before), "\n\tvar:", np.std(scores_svc_before))
+# print("scores_svc after: " , scores_svc_after, "\n\tmean:", np.mean(scores_svc_after), "\n\tvar:", np.std(scores_svc_after))

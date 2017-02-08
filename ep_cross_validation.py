@@ -13,8 +13,8 @@ from sklearn.model_selection import KFold
 import warnings
 warnings.filterwarnings("ignore")
 
-#sets = ["leukemia", "prostate", "srbct", "colon", "adenocarcinoma"]
-sets = ["colon"]
+sets = ["leukemia", "prostate", "srbct", "colon", "adenocarcinoma"]
+#sets = ["srbct", "adenocarcinoma"]
 
 for j in range(len(sets)):
     print("Reading from dataset " + sets[j] + "...")
@@ -28,9 +28,9 @@ for j in range(len(sets)):
     print(y.shape)    
     model_svc = SVC(max_iter=100000000)
     
-    iters = 20
+    iters = 1
     k = 3
-    rhos = [0.02, 0.03, 0.04, 0.05, 0.1, 0.2]
+    rhos = [0.04, 0.05, 0.1, 0.2]
     
     scores_ep = np.zeros(shape=(iters,k))
     scores_ep_gene = np.zeros(shape=(iters,k))

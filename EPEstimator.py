@@ -12,7 +12,7 @@ class EPClassifier(BaseEstimator, ClassifierMixin):
     
     def fit(self, X, y):
         if self.our:
-            self.f_ = ep.ep(X, y, 0.000000000001, 1.0, tolerance=10e-18, rho=self.rho, maxiter=self.max_iter, verbose=False)
+            self.f_ = ep.ep(X, y, 0.000000000001, 1.0, tolerance=10e-12, rho=self.rho, maxiter=self.max_iter, verbose=False)[0]
         else:
             self.f_ = ep_gene_final.ep_gene(X, y, kkk=self.rho)
         return self

@@ -3,8 +3,9 @@ import ep
 from sklearn.model_selection import train_test_split
 import matplotlib. pyplot as plt
 
-datasets = ["leukemia", "prostate", "srbct", "colon", "adenocarcinoma"]
-set = 1
+datasets = ["leukemia", "prostate", "colon", "adenocarcinoma"]
+set = 2
+threshold = 0.8
 
 print("Running EP with dataset " + datasets[set] + "...")
 
@@ -14,6 +15,8 @@ y = np.genfromtxt('data/' + datasets[set] + '_y.csv', delimiter=",")
 print("x:", x.shape)
 print("y:", y.shape)
 
+n,d = x.shape
+
 print("Mean:     ", np.mean(x, axis=1))
 print("Variance: ", np.var(x, axis=1))
     
@@ -21,10 +24,10 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_
 pos = np.where(y == 1)[0]
 neg = np.where(y == -1)[0]
 
-print("pos: " , pos)
-print("neg: " , neg)
+# print("pos: " , pos)
+# print("neg: " , neg)
 
-out = ep.ep(x_train, y_train, 0.000000000001, 1.0, tolerance=10e-12, rho=0.04, maxiter=100, verbose=False)
+out = ep.ep(x_train, y_train, 0.000000000001, 1.0, tolerance=10e-12, rho=0.01, maxiter=100, verbose=False)
 f = out[0]
 p = out[1]
 print("np.max(p): " , np.max(p))
@@ -43,28 +46,34 @@ inds3 = np.where(p > 0.3)
 inds2 = np.where(p > 0.2)
 inds1 = np.where(p > 0.1)
 
+inds = np.where(p > threshold)[0]
+
 print("inds8: " , inds8)
 print("inds7: " , inds7)
 print("inds6: " , inds6)
 print("inds5: " , inds5)
 print("inds4: " , inds4)
 
+# Plot whole array
 plt.figure(figsize=(10,30))
 plt.imshow(np.vstack((x[pos], x[neg])), interpolation='None', aspect='auto')
 plt.axhline(y=len(pos), alpha=0.5)
-for i in inds8:
+
+# Plot Snippets of array where p is relevant for prediction (>threshold)
+for i in inds:
+    upper_i = max(0, min(d, i + 5))
+    lower_i = max(0, min(d, i - 5))
+    
     plt.text(i, -1, '|')
-    plt.text(i, x.shape[0]+1, '|')
-    bottom = i - 20
-    top = i + 20
-    if bottom < 0:
-        bottom = 0
-    if top > x.shape[1]:
-        top = x.shape[1]
-    for j in range(bottom,top):
+    plt.text(i, n+1, '|')
+    print("upper_i: ", upper_i)
+    print("lower_i: " , lower_i)
+    print("range: " , range(lower_i, upper_i))
+    for j in range(lower_i,upper_i):
         plt.text(j,-1,'|\n{0:.2f}'.format(np.mean(x[pos,j])),horizontalalignment='center')
-        plt.text(j,x.shape[0]+1,'|\n{0:.2f}'.format(np.mean(x[neg,j])),horizontalalignment='center')
-plt.colorbar()
+        plt.text(j,n+1,'|\n{0:.2f}'.format(np.mean(x[neg,j])),horizontalalignment='center')
+        
+plt.colorbar
 
 plt.figure()
 n, bins, patches = plt.hist(p, 50, normed=True)
