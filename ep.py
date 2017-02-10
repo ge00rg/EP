@@ -67,8 +67,11 @@ def ep(x, y, var_0=0.000000000001, var_1=1.0, rho=0.1,
                 # 22-25
                 v_old = np.reciprocal(np.reciprocal(v) - np.reciprocal(ny[i]))
                 # if v_old becomes negative, go to next iteration
-                if (v_old < 0).any():
+                if (np.any(v_old < 0)):
                     print('[INFO] Continued, because some v_old < 0.')
+                    continue
+                if(np.any(np.isnan(v_old))):
+                    print('[INFO] Continued, because some v_old = NaN.')
                     continue
                 mu_old = mu + np.multiply(
                     np.multiply(v_old, np.reciprocal(ny[i])), mu - m[i])
@@ -85,6 +88,10 @@ def ep(x, y, var_0=0.000000000001, var_1=1.0, rho=0.1,
                     (alpha_i * (np.dot(x[i].T, mu_new) + alpha_i))/(
                         np.dot(x[i].T, np.multiply(v_old, x[i])) + 1.0)) *\
                     np.multiply(np.multiply(v_old, x[i]), np.multiply(v_old, x[i]))
+
+                if (np.any(np.isnan(v_new))):
+                    print('[INFO] Continued, because some v_new = NaN.')
+                    continue
                 # not sure this will be necessary later, but for now...
                 if np.array_equal(v_new, v_old):
                     print('cont')
@@ -97,7 +104,7 @@ def ep(x, y, var_0=0.000000000001, var_1=1.0, rho=0.1,
                 #    np.sqrt((ny_new_i + v_old)/ny_new_i))*np.exp(
                 #    np.sum((m_new_i - mu_old)**2/(2.0*(v_old + ny_new_i))))
                 s_i = 1
-    
+
                 # update
                 mu = mu_new
                 
