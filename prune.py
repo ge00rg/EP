@@ -11,7 +11,8 @@ from sklearn.model_selection import KFold
 import warnings
 
 warnings.filterwarnings("ignore")
-
+import sys
+print(sys.version)
 def easyclass(x, y, per=0.1):
     pos = np.where(y == 1)[0]
     neg = np.where(y == -1)[0]
@@ -39,13 +40,15 @@ def easyclass(x, y, per=0.1):
     print(x[:,inds], corr[inds])
     return inds, corr[inds], f
 
-datasets = ["leukemia", "prostate", "colon", "adenocarcinoma"]
+datasets = ["leukemia", "prostate", "colon"]
 
 set = 2
 
 x = np.genfromtxt('data/' + datasets[set] + '_x.csv', delimiter=",")
 y = np.genfromtxt('data/' + datasets[set] + '_y.csv', delimiter=",")
 y = y.reshape(y.shape[0],1)
+
+n,d = x.shape
 
 print("x:", x.shape)
 print("y:", y.shape)
@@ -54,12 +57,39 @@ x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1)
 pos = np.where(y == 1)[0]
 neg = np.where(y == -1)[0]
 
-inds, corr, f = easyclass(x_train, y_train, per=0.2)
-#print(f(x_test), y_test)
-
+inds, corr, f = easyclass(x_train, y_train, per=0.1)
+print("Features with max abs correlation as calculated by easyclass:")
+for i in range(len(inds)):
+    print("\t" + str(inds[i]) + " -> " + str(corr[i]))
+    
 x_reduced = x[:,inds]
 y_reduced = y
-print("x_reduced", x_reduced.shape)
+print("x_reduced.shape", x_reduced.shape)
+
+# Plot whole array
+fig = plt.figure()
+plt.imshow(np.vstack((x[pos], x[neg])), interpolation='None', aspect='auto')
+plt.axhline(y=len(pos), alpha=0.5, linewidth=2, color='#FF0000')
+plt.colorbar()
+plt.suptitle("Dataset " + datasets[set])
+fig.canvas.set_window_title("Dataset " + datasets[set])
+
+# Plot snippets of array where p is relevant for prediction (>threshold)
+for i in inds:
+    upper_i = max(0, min(d, i + 6))
+    lower_i = max(0, min(d, i - 5))
+    fig, ax = plt.subplots()
+    plt.suptitle("Dataset " + datasets[set] + ": Feature " + str(i))
+    fig.canvas.set_window_title("Dataset " + datasets[set] + ": Feature " + str(i)) 
+    plt.imshow(np.vstack((x[pos,lower_i:upper_i], x[neg,lower_i:upper_i])), interpolation='None', aspect='auto')
+    plt.axhline(y=len(pos), alpha=0.5, linewidth=2, color='#FF0000')
+    plt.colorbar()
+
+    ticklabels = list(range(lower_i,upper_i))
+    ax.set_xticks(list(range(0,11)))
+    ax.set_xticklabels(ticklabels)
+
+plt.show()
 
 iters = 10
 k = 5
@@ -76,8 +106,8 @@ def f3():
 
 #s1 = timeit.timeit(f1, number=1000)
 #s2 = timeit.timeit(f2, number=1000)
-s3 = timeit.timeit(f3, number=1000)
-print(s3)
+# s3 = timeit.timeit(f3, number=1000)
+# print(s3)
 #print("Timeit1: ", s1, "\nTimeit2: ", s2)
 
 # for i in range(iters):

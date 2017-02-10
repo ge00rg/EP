@@ -3,9 +3,10 @@ import ep
 from sklearn.model_selection import train_test_split
 import matplotlib. pyplot as plt
 
-datasets = ["leukemia", "prostate", "colon", "adenocarcinoma"]
-set = 2
-threshold = 0.8
+datasets = ["our_experiment", "leukemia", "prostate", "colon"]
+set = 3
+rho = 0.01
+threshold = 0.5
 
 print("Running EP with dataset " + datasets[set] + "...")
 
@@ -16,75 +17,73 @@ print("x:", x.shape)
 print("y:", y.shape)
 
 n,d = x.shape
-
-print("Mean:     ", np.mean(x, axis=1))
-print("Variance: ", np.var(x, axis=1))
     
 x_train, x_test, y_train, y_test = train_test_split(x, y, test_size=0.1, random_state=10)
 pos = np.where(y == 1)[0]
 neg = np.where(y == -1)[0]
 
-# print("pos: " , pos)
-# print("neg: " , neg)
+f,p = ep.ep(x_train, y_train, 0.000000000001, 1.0, tolerance=10e-12, rho=rho, maxiter=100, verbose=False)
 
-out = ep.ep(x_train, y_train, 0.000000000001, 1.0, tolerance=10e-12, rho=0.01, maxiter=100, verbose=False)
-f = out[0]
-p = out[1]
 print("np.max(p): " , np.max(p))
-
 for i in range(x_test.shape[0]):
     print(str(i) + ":", "Prediction: " + str(f(x_test[i])) + "\tLabel: " + str(y_test[i]))
 
-print("p", p)
+mean_pos = np.mean(x[pos],axis=0)
+mean_neg = np.mean(x[neg],axis=0)
+var_pos = np.var(x[pos],axis=0)
+var_neg = np.var(x[neg],axis=0)
+corr =  (mean_pos - mean_neg) / (0.5 * (var_pos + var_neg))
+mean_diff = np.abs(mean_pos - mean_neg)    
 
-inds8 = np.where(p > 0.8)
-inds7 = np.where(p > 0.7)
-inds6 = np.where(p > 0.6)
-inds5 = np.where(p > 0.5)
-inds4 = np.where(p > 0.4)
-inds3 = np.where(p > 0.3)
-inds2 = np.where(p > 0.2)
-inds1 = np.where(p > 0.1)
+corr_max_ind = np.argpartition(np.abs(corr), -10)[-10:]
+print("10 features with max abs corr: ")
+for i in range(len(corr_max_ind)):
+    print("\t" + str(corr_max_ind[i]) + " -> " + str(corr[corr_max_ind[i]]))
 
 inds = np.where(p > threshold)[0]
 
-print("inds8: " , inds8)
-print("inds7: " , inds7)
-print("inds6: " , inds6)
-print("inds5: " , inds5)
-print("inds4: " , inds4)
-
 # Plot whole array
-plt.figure(figsize=(10,30))
+fig = plt.figure()
 plt.imshow(np.vstack((x[pos], x[neg])), interpolation='None', aspect='auto')
-plt.axhline(y=len(pos), alpha=0.5)
+plt.axhline(y=len(pos), alpha=0.5, linewidth=2, color='#FF0000')
+plt.colorbar()
+plt.suptitle("Dataset " + datasets[set])
+fig.canvas.set_window_title("Dataset " + datasets[set])
+fig.savefig("results/img/" + datasets[set] + "_all_features", dpi=1200)
 
-# Plot Snippets of array where p is relevant for prediction (>threshold)
+# Plot snippets of array where p is relevant for prediction (>threshold)
 for i in inds:
-    upper_i = max(0, min(d, i + 5))
+    upper_i = max(0, min(d, i + 6))
     lower_i = max(0, min(d, i - 5))
-    
-    plt.text(i, -1, '|')
-    plt.text(i, n+1, '|')
-    print("upper_i: ", upper_i)
-    print("lower_i: " , lower_i)
-    print("range: " , range(lower_i, upper_i))
-    for j in range(lower_i,upper_i):
-        plt.text(j,-1,'|\n{0:.2f}'.format(np.mean(x[pos,j])),horizontalalignment='center')
-        plt.text(j,n+1,'|\n{0:.2f}'.format(np.mean(x[neg,j])),horizontalalignment='center')
-        
-plt.colorbar
+    fig, ax = plt.subplots()
+    plt.suptitle("Dataset " + datasets[set] + ": Feature " + str(i))
+    fig.canvas.set_window_title("Dataset " + datasets[set] + ": Feature " + str(i)) 
+    plt.imshow(np.vstack((x[pos,lower_i:upper_i], x[neg,lower_i:upper_i])), interpolation='None', aspect='auto')
+    plt.axhline(y=len(pos), alpha=0.5, linewidth=2, color='#FF0000')
+    plt.colorbar()
 
-plt.figure()
+    ticklabels = list(range(lower_i,upper_i))
+    ax.set_xticks(list(range(0,11)))
+    ax.set_xticklabels(ticklabels)
+
+    fig.savefig("results/img/" + datasets[set] + "_feature_" + str(i), dpi=1200)
+
+    print("Feature " + str(i) + " relevant with p=" + str(p[i]))
+    mean_pos = np.mean(x[pos,i])
+    mean_neg = np.mean(x[neg,i])
+    mean_diff = np.abs(mean_pos - mean_neg)
+    var_pos = np.var(x[pos,i])
+    var_neg = np.var(x[neg,i])
+    corr =  (mean_pos - mean_neg) / (0.5 * (var_pos + var_neg))
+    mean_diff = np.abs(mean_pos - mean_neg)    
+    print("Feature " + str(i) + " relevant with p=" + str(p[i]) + ".\n\tMean Diff: " + str(mean_diff) + "\n\tCorr: " + str(corr))
+    
+# Plot histogramm        
+fig = plt.figure()
 n, bins, patches = plt.hist(p, 50, normed=True)
 plt.yscale('log', nonposy='clip')
-plt.show()
+plt.suptitle("Dataset " + datasets[set] + ": Histogramm")
+fig.canvas.set_window_title("Dataset " + datasets[set] + ": Histogramm")
+fig.savefig("results/img/" + datasets[set] + "_histogram", dpi=1200)
 
-#histogram x
-#feature selection with different cutoffs x
-#image micaroarray and highlight these x
-#classification using:
-#svm
-#mu, v from ep
-#easyclass
-#use easyclass for preprocessing
+plt.show()
