@@ -5,7 +5,6 @@ from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
 import ep
 from scipy import interpolate
-from hack import run
 import seaborn
 
 
@@ -55,43 +54,46 @@ class Experiment:
 
 
 def main():
-    # beta = np.array([1.0, 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, -5.0])
-    beta = np.array([0.33, 0.33,0.33,0.0,0.0,0.0,0.0,0.0,0.0,0.0, -0.5])
-    # beta = np.ones(shape=(11))
-    # for i in range(10):
-    #     beta[i] = np.random.normal(0,1)
-    # beta[10] = -5.0
+    beta = np.array([0.5, 0.5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, -.5])
+    sparsetys = 1./np.logspace(0, 2,20)
+    sigma_0 = 1./np.logspace(10, 15,20)
 
-    # sparsetys = [1.0, 0.75,0.5, 0.25, 0.1, 0.075, 0.05, 0.025, 0.01, 0.0075, 0.005, 0.0025]
-    sparsetys = [0.1,0.01, 0.001, 0.0001, 0.00001, 0.000001, 0.0000001, 0.00000001, 0.000000001, 0.000000000001, 0.0000000000001, 0.00000000000001, 0.000000000000001, 0.0000000000000001, 0.00000000000000001]
-    sigma_0 = [0.000001, 0.0000001, 0.00000001, 0.000000001, 0.0000000001, 0.00000000001]
-
-    nSamples = [60,80,100,120, 140, 160, 180, 200, 220, 240, 240, 240, 240, 240, 240]
-    nSamples = [10,50,100,150, 200, 250, 300, 350, 400, 450, 500, 550, 600, 650, 700]
-    # sparsetys = [0.0001, 0.00001, 0.0000001, 0.000000001]
-    # nSamples = [10, 40, 160, 640]
+    nSamples = np.linspace(1,1000,20,dtype = int)
+    experiment = Experiment()
+    noise = 0.000001
+    xt, yt = experiment.getTestDataNormal(1000, 10, beta,noise)
+    figt =plt.figure()
+    figt.add_subplot(1,3,1)
+    plt.scatter(xt[:,0], yt)
+    figt.add_subplot(1,3,2)
+    plt.scatter(xt[:,1], yt)
+    figt.add_subplot(1,3,3)
+    plt.scatter(xt[:,2], yt)
+    plt.show()
 
     deltaGrid = list()
     for sparsety in sparsetys :
         deltaW = list()
         for n in nSamples:
-            experiment = Experiment()
-            x,y = experiment.getTestDataNormal(n,10, beta)
+
+            x,y = experiment.getTestDataNormal(n,10, beta,noise)
             negatives = np.shape(np.where(y == -1)[0])[0]
             print("There are: " + str(n - negatives) + " and :" + str(negatives) +" negatives")
-            f,p = ep.ep(x, y,0.00001, 1.0, tolerance=10e-18, rho=sparsety, verbose=False)
-            p/= np.max(p)
-            # deltaW.append((np.sqrt(np.sum(np.power(beta[:-1]-p,2)))))
+            f,p = ep.ep(x, y,float("1e-19"), 1.0, tolerance=10e-18, rho=sparsety, verbose=False)
+            # p/= np.max(p)
+            p[np.where(p <= np.argmin(p[:1]))] =0.0
+            deltaW.append((np.sqrt(np.sum(np.power(beta[:-1]-p,2)))))
+            print("P values: sparsety = " + str(sparsety) + " , nsamples= " + str(n))
             print(p)
-            core = np.dot(p, beta[:-1])
-            deltaW.append(core)
+            # core = np.dot(p, beta[:-1])
+            # deltaW.append(core)
         deltaGrid.append(np.asarray(deltaW))
 
 
-    X, Y = np.meshgrid(np.log10(sparsetys), nSamples) #[1, 2,3,4, 5, 6 ,7 ,8 ,9, 10, 11]
+    X, Y = np.meshgrid(sparsetys, nSamples) #[1, 2,3,4, 5, 6 ,7 ,8 ,9, 10, 11]
     fig = plt.figure(figsize=(26,20))
     ax = Axes3D(fig)
-    ax.set_xlabel("log10(sparsety)")
+    ax.set_xlabel("sparsety")
     ax.set_ylabel("nSamples")
     ax.set_zlabel("log10(delta W)")
 
