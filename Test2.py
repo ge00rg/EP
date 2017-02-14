@@ -1,11 +1,13 @@
 import numpy as np
+from matplotlib.colors import LogNorm
 from mpl_toolkits.mplot3d import Axes3D
 import matplotlib.pyplot as plt
 from matplotlib import cm
 from matplotlib.ticker import LinearLocator, FormatStrFormatter
-import ep
 from scipy import interpolate
 import seaborn
+
+import nep
 
 
 class Experiment:
@@ -50,18 +52,57 @@ class Experiment:
         return -1.0
 
 
+def helper(x, idx):
+    t = np.copy(x)
+    t[idx] = 0
+    return t
 
+
+
+def getRank(p):
+    return np.argsort(p)[::-1]
+
+def frotman(p, dim):
+    t= np.zeros(dim)
+    t[0] = 5
+    t[1] = 5
+    t[2] = 5
+    t[3] = 5
+    t[4] = 5
+    t[5] = 5
+    t[6] = 5
+    t[7] = 5
+    t[8] = 5
+    t[9] = 5
+    t[10:] = 20
+    res = np.sum(np.abs(getRank(p) - t))
+    return res
 
 
 def main():
-    beta = np.array([0.5, 0.5,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, -.5])
-    sparsetys = 1./np.logspace(0, 2,20)
-    sigma_0 = 1./np.logspace(10, 15,20)
+    resolution = 20
+    dim = 50
+    # beta = np.array([1.0, 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, -0.5])
+    beta = np.zeros(shape=(dim + 1))
+    beta[0] = 0.1
+    beta[1] = 0.1
+    beta[2] = 0.1
+    beta[3] = 0.1
+    beta[4] = 0.1
+    beta[5] = 0.1
+    beta[6] = 0.1
+    beta[7] = 0.1
+    beta[8] = 0.1
+    beta[9] = 0.1
 
-    nSamples = np.linspace(1,1000,20,dtype = int)
+    beta[-1] = -0.5
+    sparsetys = 1./np.logspace(0, 1,resolution)
+    # sigma_0 = 1./np.logspace(10, 15,6)
+
+    nSamples = np.linspace(10,100,resolution,dtype = int)
     experiment = Experiment()
     noise = 0.000001
-    xt, yt = experiment.getTestDataNormal(1000, 10, beta,noise)
+    xt, yt = experiment.getTestDataNormal(1000, dim, beta,noise)
     figt =plt.figure()
     figt.add_subplot(1,3,1)
     plt.scatter(xt[:,0], yt)
@@ -71,39 +112,61 @@ def main():
     plt.scatter(xt[:,2], yt)
     plt.show()
 
-    deltaGrid = list()
+    deltaGridDiff = list()
+    deltaGridDiff2 = list()
     for sparsety in sparsetys :
-        deltaW = list()
+        deltaWDiff = list()
+        deltaWDiff2 = list()
         for n in nSamples:
 
-            x,y = experiment.getTestDataNormal(n,10, beta,noise)
+            x,y = experiment.getTestDataNormal(n,dim, beta,noise)
             negatives = np.shape(np.where(y == -1)[0])[0]
             print("There are: " + str(n - negatives) + " and :" + str(negatives) +" negatives")
-            f,p = ep.ep(x, y,float("1e-19"), 1.0, tolerance=10e-18, rho=sparsety, verbose=False)
+            f,p = nep.ep(x, y,1e-19, 1.0, tolerance=10e-18, rho=sparsety, verbose=False)
             # p/= np.max(p)
-            p[np.where(p <= np.argmin(p[:1]))] =0.0
-            deltaW.append((np.sqrt(np.sum(np.power(beta[:-1]-p,2)))))
             print("P values: sparsety = " + str(sparsety) + " , nsamples= " + str(n))
             print(p)
+            deltaWDiff.append((np.sqrt(np.sum(np.power(beta[:-1] - p, 2)))))
+            # deltaWDiff2.append((np.sqrt(np.sum(np.power(beta[:-1] - helper(p, np.where(p < np.min(p[list([0,1,2,3,4,5,6,7,8,9])]))), 2)))))
+            deltaWDiff2.append(frotman(p,dim))
             # core = np.dot(p, beta[:-1])
             # deltaW.append(core)
-        deltaGrid.append(np.asarray(deltaW))
-
-
-    X, Y = np.meshgrid(sparsetys, nSamples) #[1, 2,3,4, 5, 6 ,7 ,8 ,9, 10, 11]
+        deltaGridDiff.append(np.asarray(deltaWDiff))
+        deltaGridDiff2.append(np.asarray(deltaWDiff2))
+    diffs = np.asarray(deltaGridDiff)
+    diffs2 = np.asarray(deltaGridDiff2)
+    X, Y = np.meshgrid(sparsetys, nSamples)
     fig = plt.figure(figsize=(26,20))
-    ax = Axes3D(fig)
-    ax.set_xlabel("sparsety")
-    ax.set_ylabel("nSamples")
-    ax.set_zlabel("log10(delta W)")
+    fig.add_subplot(1,2,1)
+    z = np.log10(np.asarray(diffs))
+    z_min, z_max = -np.abs(z).max(), np.abs(z).max()
+    surf = plt.pcolor(X,Y,np.log10(np.asarray(diffs)),cmap = cm.get_cmap("viridis"), vmin=z_min, vmax=z_max)
+    plt.axvline(0.2, color='red')
+    plt.title('Absolute Difference')
+    plt.axis([X.min(), X.max(), Y.min(), Y.max()])
+    plt.xlabel("sparsety")
+    plt.ylabel("Samples")
+    fig.colorbar(surf)
+    # plt.yticks([int(j) for j in nSamples])
+    # plt.xticks([int(j) for j in sparsetys])
+    # plt.xlim(np.min(sparsetys), np.max(sparsetys))
+    # fig.colorbar(surf)
+    # fig.add_subplot(1, 3, 2)
+    # plt.imshow(np.log10(np.asarray(diffs)[:-1, :-1]))
+    #
+    # # ax.set_xscale('log')
 
-    # ax.set_xscale('log')
 
 
-    surf = ax.plot_surface(X, Y, np.log10(np.asarray(deltaGrid)), rstride=1, cstride=1, cmap = cm.get_cmap("summer"),  linewidth=0, antialiased=True)
+    fig.add_subplot(1, 2, 2)
+    X, Y = np.meshgrid(sparsetys, nSamples) #[1, 2,3,4, 5, 6 ,7 ,8 ,9, 10, 11]
+    surf = plt.pcolor(X,Y,diffs2,cmap = cm.get_cmap("viridis"))
+    plt.axvline(0.2, color='red')
+    plt.title('Spearman footrule Difference')
+    plt.xlabel("sparsity")
+    plt.ylabel("Samples")
     fig.colorbar(surf)
     plt.show()
-    fig.savefig("/home/maxweule/plot_3")
-
+    fig.savefig("/home/kaw/Bilder/plot_3")
 
 if  __name__ =='__main__':main()
