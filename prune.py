@@ -30,8 +30,15 @@ def easyclass(x, y, per=0.1):
     corr = mu/var
     corrmax = np.max(corr)
     corrmin = np.min(corr)
-    u = np.where(corr >= corrmax*(1-per))[0]
-    l = np.where(corr <= corrmin*(1-per))[0]
+    if corrmax > np.abs(corrmin):
+        u = np.where(corr >= corrmax*(1-per))[0]
+        l = np.where(corr <= -corrmax*(1-per))[0]
+    else:
+        u = np.where(corr >= -corrmin*(1-per))[0]
+        l = np.where(corr <= corrmin*(1-per))[0]
+    #u = np.where(corr >= corrmax*(1-per))[0]
+    #l = np.where(corr <= corrmin*(1-per))[0]
+    print(l, u)
     inds = np.hstack((l,u))
 
     def f(x):
@@ -61,7 +68,7 @@ inds, corr, f = easyclass(x_train, y_train, per=0.1)
 print("Features with max abs correlation as calculated by easyclass:")
 for i in range(len(inds)):
     print("\t" + str(inds[i]) + " -> " + str(corr[i]))
-    
+
 x_reduced = x[:,inds]
 y_reduced = y
 print("x_reduced.shape", x_reduced.shape)
@@ -80,7 +87,7 @@ for i in inds:
     lower_i = max(0, min(d, i - 5))
     fig, ax = plt.subplots()
     plt.suptitle("Dataset " + datasets[set] + ": Feature " + str(i))
-    fig.canvas.set_window_title("Dataset " + datasets[set] + ": Feature " + str(i)) 
+    fig.canvas.set_window_title("Dataset " + datasets[set] + ": Feature " + str(i))
     plt.imshow(np.vstack((x[pos,lower_i:upper_i], x[neg,lower_i:upper_i])), interpolation='None', aspect='auto')
     plt.axhline(y=len(pos), alpha=0.5, linewidth=2, color='#FF0000')
     plt.colorbar()
@@ -113,6 +120,6 @@ def f3():
 # for i in range(iters):
 #     scores_svc_after[i] = cross_val_score(model_svc, x_reduced, y_reduced, cv=KFold(k,shuffle=True, random_state=np.random.randint(10,1000)), scoring='accuracy')
 #     scores_svc_before[i] = cross_val_score(model_svc, x, y, cv=KFold(k,shuffle=True, random_state=np.random.randint(10,1000)), scoring='accuracy')
-#     
+#
 # print("scores_svc before: " , scores_svc_before, "\n\tmean:", np.mean(scores_svc_before), "\n\tvar:", np.std(scores_svc_before))
 # print("scores_svc after: " , scores_svc_after, "\n\tmean:", np.mean(scores_svc_after), "\n\tvar:", np.std(scores_svc_after))
