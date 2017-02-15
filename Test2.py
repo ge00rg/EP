@@ -64,42 +64,47 @@ def getRank(p):
 
 def frotman(p, dim):
     t= np.zeros(dim)
-    t[0] = 5
-    t[1] = 5
-    t[2] = 5
-    t[3] = 5
-    t[4] = 5
-    t[5] = 5
-    t[6] = 5
-    t[7] = 5
-    t[8] = 5
-    t[9] = 5
-    t[10:] = 20
-    res = np.sum(np.abs(getRank(p) - t))
+    t[0] = 4.5
+    t[1] = 4.5
+    t[2] = 4.5
+    t[3] = 4.5
+    t[4] = 4.5
+    t[5] = 4.5
+    t[6] = 4.5
+    t[7] = 4.5
+    t[8] = 4.5
+    t[9] = 4.5
+    t[10:] = 29.5
+    res = float(np.sum(np.abs(getRank(p) - t))/float(795))
+    return res
+
+def frotman2(p, dim, aktive):
+    t= np.zeros(dim)
+    t[:aktive] = 1
+    t[aktive:] = -1
+    k = np.zeros_like(p)
+    k[getRank(p)[:aktive]] = 1
+    k[getRank(p)[aktive:]] = -1
+
+    res = float(np.sum(np.abs(k - t))/float(dim))
     return res
 
 
 def main():
     resolution = 20
-    dim = 50
+    dim = 500
+    aktive = 50
     # beta = np.array([1.0, 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, -0.5])
     beta = np.zeros(shape=(dim + 1))
-    beta[0] = 0.1
-    beta[1] = 0.1
-    beta[2] = 0.1
-    beta[3] = 0.1
-    beta[4] = 0.1
-    beta[5] = 0.1
-    beta[6] = 0.1
-    beta[7] = 0.1
-    beta[8] = 0.1
-    beta[9] = 0.1
+    beta[:aktive] = 1.0/aktive
 
+    norm = frotman(range(0,500),dim)
+    print (norm)
     beta[-1] = -0.5
     sparsetys = 1./np.logspace(0, 1,resolution)
     # sigma_0 = 1./np.logspace(10, 15,6)
 
-    nSamples = np.linspace(10,100,resolution,dtype = int)
+    nSamples = np.linspace(100,1000,resolution,dtype = int)
     experiment = Experiment()
     noise = 0.000001
     xt, yt = experiment.getTestDataNormal(1000, dim, beta,noise)
@@ -128,7 +133,7 @@ def main():
             print(p)
             deltaWDiff.append((np.sqrt(np.sum(np.power(beta[:-1] - p, 2)))))
             # deltaWDiff2.append((np.sqrt(np.sum(np.power(beta[:-1] - helper(p, np.where(p < np.min(p[list([0,1,2,3,4,5,6,7,8,9])]))), 2)))))
-            deltaWDiff2.append(frotman(p,dim))
+            deltaWDiff2.append(frotman2(p,dim,aktive))
             # core = np.dot(p, beta[:-1])
             # deltaW.append(core)
         deltaGridDiff.append(np.asarray(deltaWDiff))
@@ -141,10 +146,10 @@ def main():
     z = np.log10(np.asarray(diffs))
     z_min, z_max = -np.abs(z).max(), np.abs(z).max()
     surf = plt.pcolor(X,Y,np.log10(np.asarray(diffs)),cmap = cm.get_cmap("viridis"), vmin=z_min, vmax=z_max)
-    plt.axvline(0.2, color='red')
-    plt.title('Absolute Difference')
+    plt.axvline(0.1, color='red')
+    plt.title('log absolute difference')
     plt.axis([X.min(), X.max(), Y.min(), Y.max()])
-    plt.xlabel("sparsety")
+    plt.xlabel("sparsity")
     plt.ylabel("Samples")
     fig.colorbar(surf)
     # plt.yticks([int(j) for j in nSamples])
@@ -161,7 +166,7 @@ def main():
     fig.add_subplot(1, 2, 2)
     X, Y = np.meshgrid(sparsetys, nSamples) #[1, 2,3,4, 5, 6 ,7 ,8 ,9, 10, 11]
     surf = plt.pcolor(X,Y,diffs2,cmap = cm.get_cmap("viridis"))
-    plt.axvline(0.2, color='red')
+    plt.axvline(0.1, color='red')
     plt.title('Spearman footrule Difference')
     plt.xlabel("sparsity")
     plt.ylabel("Samples")
