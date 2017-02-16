@@ -93,7 +93,7 @@ def frotman2(p, dim, aktive):
 def main():
     resolution = 20
     dim = 500
-    aktive = 50
+    aktive = 100
     # beta = np.array([1.0, 0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0,0.0, -0.5])
     beta = np.zeros(shape=(dim + 1))
     beta[:aktive] = 1.0/aktive
@@ -146,7 +146,7 @@ def main():
     z = np.log10(np.asarray(diffs))
     z_min, z_max = -np.abs(z).max(), np.abs(z).max()
     surf = plt.pcolor(X,Y,np.log10(np.asarray(diffs)),cmap = cm.get_cmap("viridis"), vmin=z_min, vmax=z_max)
-    plt.axvline(0.1, color='red')
+    plt.axvline(0.2, color='red')
     plt.title('log absolute difference')
     plt.axis([X.min(), X.max(), Y.min(), Y.max()])
     plt.xlabel("sparsity")
@@ -166,7 +166,7 @@ def main():
     fig.add_subplot(1, 2, 2)
     X, Y = np.meshgrid(sparsetys, nSamples) #[1, 2,3,4, 5, 6 ,7 ,8 ,9, 10, 11]
     surf = plt.pcolor(X,Y,diffs2,cmap = cm.get_cmap("viridis"))
-    plt.axvline(0.1, color='red')
+    plt.axvline(0.2, color='red')
     plt.title('Spearman footrule Difference')
     plt.xlabel("sparsity")
     plt.ylabel("Samples")
