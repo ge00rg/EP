@@ -38,14 +38,15 @@ def easyclass(x, y, per=0.1):
         l = np.where(corr <= corrmin*(1-per))[0]
     #u = np.where(corr >= corrmax*(1-per))[0]
     #l = np.where(corr <= corrmin*(1-per))[0]
-    print(l, u)
     inds = np.hstack((l,u))
+
+    sortinds = np.argsort(corr[inds])
 
     def f(x):
         return np.dot(x[:,inds], corr[inds])
 
     print(x[:,inds], corr[inds])
-    return inds, corr[inds], f
+    return inds[sortinds], corr[inds][sortinds], f
 
 datasets = ["leukemia", "prostate", "colon"]
 
@@ -72,6 +73,11 @@ for i in range(len(inds)):
 x_reduced = x[:,inds]
 y_reduced = y
 print("x_reduced.shape", x_reduced.shape)
+
+#classification
+print('classifications results')
+print(f(x_test))
+print(y_test)
 
 # Plot whole array
 fig = plt.figure()
